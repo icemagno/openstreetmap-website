@@ -25,19 +25,24 @@ RUN apt-get update \
       ruby2.7-dev \
       tzdata \
       unzip \
-      yarnpkg \
- && apt-get clean \
- && rm -rf /var/lib/apt/lists/*
+      gnupg 
 
-# Install compatible Osmosis to help users import sample data in a new instance
-RUN curl -OL https://github.com/openstreetmap/osmosis/releases/download/0.47.2/osmosis-0.47.2.tgz \
- && tar -C /usr/local -xzf osmosis-0.47.2.tgz
+RUN curl -sS https://dl.yarnpkg.com/debian/pubkey.gpg | apt-key add -
+ 
+RUN echo "deb https://dl.yarnpkg.com/debian/ stable main" | tee /etc/apt/sources.list.d/yarn.list
+RUN apt-get update && apt-get install -y yarn
+RUN apt-get -y upgrade
+
+RUN apt-get clean \
+ && rm -rf /var/lib/apt/lists/*
 
 ENV DEBIAN_FRONTEND=dialog
 
 # Setup app location
 RUN mkdir -p /app
 WORKDIR /app
+
+COPY ./ /app/
 
 # Install Ruby packages
 ADD Gemfile Gemfile.lock /app/
@@ -47,4 +52,6 @@ RUN gem install bundler \
 # Install NodeJS packages using yarn
 ADD package.json yarn.lock /app/
 ADD bin/yarn /app/bin/
-RUN bundle exec bin/yarn install
+RUN yarn config set ignore-engines true
+RUN bundle exec yarn install
+RUN touch config/settings.local.yml
