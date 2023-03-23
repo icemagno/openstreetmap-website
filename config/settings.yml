@@ -78,9 +78,10 @@ nominatim_url: "https://nominatim.openstreetmap.org/"
 # Default editor
 default_editor: "id"
 # OAuth application for the web site
-#oauth_application: ""
+oauth_application: "5R07ScAGJFyUP1pjmvrygC273weXuwKOZj5MS_VAe98"
+oauth_key: "5FaPdosURvuak7r4l9uup1wC0agsgbE01OwC916bduQ"
 # OAuth application for iD
-#id_application: ""
+id_application: "Q5n8J1VcqFJJ66NUGn4njSbJmXzlTm0y4FsCz0VCBrU"
 # Imagery to return in capabilities as blacklisted
 imagery_blacklist:
   # Current Google imagery URLs have google or googleapis in the domain
