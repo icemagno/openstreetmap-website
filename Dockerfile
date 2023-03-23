@@ -45,13 +45,14 @@ WORKDIR /app
 COPY ./ /app/
 
 # Install Ruby packages
-ADD Gemfile Gemfile.lock /app/
-RUN gem install bundler \
- && bundle install
+# ADD Gemfile Gemfile.lock /app/
+RUN gem install bundler && bundle install
 
 # Install NodeJS packages using yarn
-ADD package.json yarn.lock /app/
-ADD bin/yarn /app/bin/
+# ADD package.json yarn.lock /app/
+# ADD bin/yarn /app/bin/
 RUN yarn config set ignore-engines true
 RUN bundle exec yarn install
-RUN touch config/settings.local.yml
+RUN cp config/settings.yml config/settings.local.yml
+RUN cp app/assets/stylesheets/common.scss app/assets/stylesheets/ltr/
+RUN cp app/assets/stylesheets/common.scss app/assets/stylesheets/rtl/common.r2.scss
