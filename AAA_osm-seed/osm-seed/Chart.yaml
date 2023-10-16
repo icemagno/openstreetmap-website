@@ -1,0 +1,8 @@
+apiVersion: v2
+description: "Helm Chart to deploy the OpenStreetMap software"
+name: osm-seed
+version: 0.0.1
+dependencies:
+  - name: cockroachdb
+    version: 5.0.5
+    repository: https://charts.cockroachdb.com/

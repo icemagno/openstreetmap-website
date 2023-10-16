@@ -1,0 +1,11 @@
+apiVersion: v2
+description: "Helm Chart to deploy nominatim"
+name: nominatim
+version: 0.0.1
+dependencies:
+  - name: common
+    repository: https://charts.bitnami.com/bitnami
+    version: 1.3.9
+  - name: postgresql
+    repository: https://charts.bitnami.com/bitnami
+    version: 10.3.5

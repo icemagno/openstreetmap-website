@@ -1,0 +1,63 @@
+# Create a pod containing the PHP-FPM application (my-php-app)
+# and nginx, each mounting the `shared-files` volume to their
+# respective /var/www/html directories.
+
+kind: Deployment
+apiVersion: apps/v1
+metadata:
+  name: nominatim
+  labels:
+    app: {{ template "name" . }}
+    release: {{ .Release.Name }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: {{ template "name" . }}
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ template "name" . }}
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        # Our nginx container, which uses the configuration declared above,
+        # along with the files shared with the PHP-FPM app.
+        - image: nginx:alpine
+          name: nginx
+          volumeMounts:
+            - name: shared-files
+              mountPath: /var/www/html
+            - name: nginx-config-volume
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+          ports:
+            - containerPort: 80
+              name: web
+              protocol: TCP
+        # Our PHP-FPM application
+        - image: ghcr.io/pjstaab/nominatim:latest
+          name: nominatim
+          volumeMounts:
+            - name: shared-files
+              mountPath: /var/www/html
+            - name: local-settings
+              mountPath: /app/src/build/settings/local.php
+              subPath: local.php
+          lifecycle:
+            postStart:
+              exec:
+                command:
+                  - bash
+                  - -c
+                  - "cp -r /app/src /var/www/html"
+      volumes:
+        - name: shared-files
+          emptyDir: {}
+        - name: nginx-config-volume
+          configMap:
+            name: nominatim-nginx-config
+        - name: local-settings
+          configMap:
+            name: nominatim-local-settings-configmap

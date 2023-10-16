@@ -1,0 +1,73 @@
+{{- if .Values.planetDump.enabled -}}
+apiVersion: batch/v1beta1
+kind: CronJob
+metadata:
+  name: {{ .Release.Name }}-planet-dump-job
+  labels:
+    app: {{ template "osm-seed.name" . }}
+    component: planet-dump-job
+    environment: {{ .Values.environment }}
+    release: {{ .Release.Name }}
+spec:
+  schedule: {{ quote .Values.planetDump.schedule }}
+  startingDeadlineSeconds: 100
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 2
+  concurrencyPolicy: Forbid
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          annotations:
+            iam.amazonaws.com/role: {{ .Values.planetDump.iamRoleName }}
+        spec:
+          containers:
+          - name: {{ .Release.Name }}-planet-dump-job
+            image: {{ .Values.planetDump.image.name }}:{{ .Values.planetDump.image.tag }}
+            command: ['./start.sh']
+            {{- if .Values.planetDump.resources.enabled }}
+            resources:
+              requests:
+                memory: {{ .Values.planetDump.resources.requests.memory }}
+                cpu: {{ .Values.planetDump.resources.requests.cpu }}
+              limits:
+                memory: {{ .Values.planetDump.resources.limits.memory }}
+                cpu: {{ .Values.planetDump.resources.limits.cpu }}
+            {{- end }}
+            env:
+              - name: POSTGRES_HOST
+                value: {{ .Values.planetDump.env.POSTGRES_HOST }}
+              - name: POSTGRES_DB
+                value: {{ .Values.planetDump.env.POSTGRES_DB }}
+              - name: POSTGRES_PASSWORD
+                value: {{ .Values.planetDump.env.POSTGRES_PASSWORD }}
+              - name: POSTGRES_USER
+                value: {{ .Values.planetDump.env.POSTGRES_USER }}
+              - name: POSTGRES_PORT
+                value: {{ .Values.planetDump.env.POSTGRES_PORT | quote }}
+              - name: CLOUDPROVIDER
+                value: {{ .Values.cloudProvider }}
+              - name: OVERWRITE_PLANET_FILE
+                value: {{ .Values.planetDump.env.OVERWRITE_PLANET_FILE | quote}}
+              # In case cloudProvider=aws
+              {{- if eq .Values.cloudProvider "aws" }}
+              - name: AWS_S3_BUCKET
+                value: {{ .Values.AWS_S3_BUCKET }}
+              {{- end }}
+              # In case cloudProvider=gcp
+              {{- if eq .Values.cloudProvider "gcp" }}
+              - name: GCP_STORAGE_BUCKET
+                value: {{ .Values.GCP_STORAGE_BUCKET }}
+              {{- end }}
+              # Memory optimization for osmosis
+              {{- if .Values.planetDump.resources.enabled }}
+              - name: MEMORY_JAVACMD_OPTIONS
+                value: {{ .Values.planetDump.resources.requests.memory | default "2Gi" | quote}}
+              {{- end }}
+          restartPolicy: OnFailure
+          {{- if .Values.planetDump.nodeSelector.enabled }}
+          nodeSelector:
+            {{ .Values.planetDump.nodeSelector.label_key }} : {{ .Values.planetDump.nodeSelector.label_value }}
+          {{- end }}
+      backoffLimit: 3
+{{- end }}
